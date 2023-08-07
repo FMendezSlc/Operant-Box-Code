@@ -58,7 +58,7 @@ events = ['session_timer',      # timer to terminate session after defined time 
           'distraction_on_timer',  # timer to turn distractor sound on
           'distraction_off_timer'] # timer to turn distractorsound off
 
-initial_state = 'reward'
+initial_state = 'start'
 
 # Variables
 

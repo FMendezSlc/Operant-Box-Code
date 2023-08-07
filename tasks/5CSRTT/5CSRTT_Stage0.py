@@ -64,7 +64,7 @@ initial_state = 'reward'
 
 # Paramters adjusted for different training stages and challanges.
 
-v.state_dur = 20 * second      # cue stimulus duration
+v.state_dur = 30 * minute      # cue stimulus duration
 v.ITI_dur   = 0.0 * second       # inter trial interval duration
 v.variable_ITI = False         # whether to use variable ITI.
 v.sound_distraction = False    # whether to use sound distraction.
@@ -73,10 +73,10 @@ v.sound_distraction = False    # whether to use sound distraction.
 
 v.session_dur   = 30 * minute  # Session duration
 v.LH_dur        = 2 * second   # limited hold duration
-v.reward_in_dur = 2 * second   # reward duration this duration
+v.reward_in_dur = 30 * minute   # reward duration this duration
 v.penalty_dur   = 5 * second   # penalty duration(All lights off)
-v.steps_rate    = 2000         # step rate for stepper motor if you want to use peristaltic pump
-v.n_steps       = 150         # number of steps for stepper motor if you want to use peristaltic pump
+v.steps_rate    = 100         # step rate for stepper motor if you want to use peristaltic pump
+v.n_steps       = 20         # number of steps for stepper motor if you want to use peristaltic pump
 v.target        = 0
 
 # Run start and end behaviour.
@@ -99,9 +99,9 @@ def start(event):
         hw.syringe_pump.forward(v.steps_rate, v.n_steps) # beginning reward
     elif event == 'exit':
         hw.reward_port.LED.off()
-        #disarm_timer('reward_in_timer')
+        disarm_timer('reward_in_timer')
     elif event == 'poke_6':
-        #set_timer('reward_in_timer', v.reward_in_dur) # timer to turn off rewrard stim after speified time(2sec usually) 
+        set_timer('reward_in_timer', v.reward_in_dur) # timer to turn off rewrard stim after speified time(2sec usually) 
         pass
     elif event == 'poke_6_out':
         print("ITI_duration:{} \n SD_duration:{}\n LH_duration:{}".format(v.ITI_dur, v.state_dur, v.LH_dur))
@@ -112,8 +112,8 @@ def choice_task(event):
 	# task phase which present random cue
     if event == 'entry':
         print('Sample_state')
-        #set_timer('port_lights_timer', v.state_dur)
-        #set_timer('penalty_omission', (v.state_dur + v.LH_dur))
+        set_timer('port_lights_timer', v.state_dur)
+        set_timer('penalty_omission', (v.state_dur + v.LH_dur))
         v.target = random.randint(1, 5) # randomly select int between 1-5 and variable as v.target 
         print('v.target:{}'.format(v.target))        
         hw.five_poke.poke_1.LED.on() # 5-choice hole_1 light on
@@ -122,7 +122,6 @@ def choice_task(event):
         hw.five_poke.poke_4.LED.on() # 5-choice hole_4 light on
         hw.five_poke.poke_5.LED.on() # 5-choice hole_5 light on
     elif event == 'exit':
-        hw.syringe_pump.backward(v.steps_rate, v.n_steps)
         hw.five_poke.poke_1.LED.off() # 5-choice hole_1 light off
         hw.five_poke.poke_2.LED.off() # 5-choice hole_2 light off
         hw.five_poke.poke_3.LED.off() # 5-choice hole_3 light off
@@ -130,7 +129,8 @@ def choice_task(event):
         hw.five_poke.poke_5.LED.off() # 5-choice hole_5 light off
         hw.speaker.off()
         disarm_timer('port_lights_timer') # clear timer for 5-Choice port lights
-    elif event == 'poke_1' or event == 'poke_2' or event == 'poke_3' or event == 'poke_4' or event == 'poke_5':
+        disarm_timer('penalty_omission')  # clear timer for omission
+    elif any(event == poke for poke in ['poke_1', 'poke_2', 'poke_3', 'poke_4', 'poke_5']):
         hw.five_poke.poke_1.LED.off() # 5-choice hole_1 light off
         hw.five_poke.poke_2.LED.off() # 5-choice hole_2 light off
         hw.five_poke.poke_3.LED.off() # 5-choice hole_3 light off
@@ -150,7 +150,7 @@ def reward(event):
     elif event == 'poke_6':
         hw.syringe_pump.forward(v.steps_rate, v.n_steps) # Reward after correct resonse and poke into reward receptacle
         print('Reward_taken')                             # the latency between correct and Reward_taken is Reward lat.
-        #set_timer('reward_in_timer', v.reward_in_dur)
+        set_timer('reward_in_timer', v.reward_in_dur)
     elif event == 'poke_6_out':
         goto_state('iti')
     elif event == 'poke_1' and v.target == 1 \
@@ -208,12 +208,11 @@ def all_states(event):
         print("Event Closing")
         stop_framework()
     elif event == 'port_lights_timer':
-        #hw.five_poke.poke_1.LED.off()
-        #hw.five_poke.poke_2.LED.off()
-        #hw.five_poke.poke_3.LED.off()
-        #hw.five_poke.poke_4.LED.off()
-        #hw.five_poke.poke_5.LED.off()
-        pass
+        hw.five_poke.poke_1.LED.off()
+        hw.five_poke.poke_2.LED.off()
+        hw.five_poke.poke_3.LED.off()
+        hw.five_poke.poke_4.LED.off()
+        hw.five_poke.poke_5.LED.off()
     elif event == 'reward_in_timer':
         hw.reward_port.LED.off()
     elif event == 'penalty_omission':
